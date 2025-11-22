@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>TinyLink Dashboard</title>
+</head>
+<body class="p-6 bg-gray-100">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">TinyLink Dashboard</h1>
+
+    <form id="createForm" class="bg-white p-4 rounded shadow mb-6">
+      <input id="targetUrl" class="border p-2 w-full mb-3" placeholder="https://example.com" />
+      <input id="customCode" class="border p-2 w-full mb-3" placeholder="Custom Code (optional)" />
+      <button class="bg-blue-600 text-white px-4 py-2 rounded">Create</button>
+      <p id="msg" class="mt-2 text-red-600"></p>
+    </form>
+
+    <table class="w-full bg-white shadow rounded">
+      <thead>
+        <tr class="border-b">
+          <th class="p-2">Code</th>
+          <th class="p-2">Target</th>
+          <th class="p-2">Clicks</th>
+          <th class="p-2">Last Clicked</th>
+          <th class="p-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+<script>
+async function load() {
+  const res = await fetch('/api/links');
+  const links = await res.json();
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = links.map(l => `
+    <tr class="border-b">
+      <td class="p-2"><a href="/code/${l.code}" class="text-blue-600">${l.code}</a></td>
+      <td class="p-2">${l.targetUrl}</td>
+      <td class="p-2">${l.clicks}</td>
+      <td class="p-2">${l.lastClickedAt || '-'}</td>
+      <td class="p-2">
+        <button onclick="del('${l.code}')" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function del(code) {
+  await fetch('/api/links/' + code, { method: 'DELETE' });
+  load();
+}
+
+document.getElementById('createForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const targetUrl = document.getElementById('targetUrl').value;
+  const customCode = document.getElementById('customCode').value;
+  let body = { targetUrl };
+  if (customCode) body.code = customCode;
+
+  const res = await fetch('/api/links', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (res.status === 201) {
+    load();
+  } else {
+    const err = await res.json();
+    document.getElementById('msg').textContent = err.error;
+  }
+};
+
+load();
+</script>
+</body>
+</html>

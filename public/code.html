@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Stats</title>
+</head>
+<body class="p-6 bg-gray-100">
+  <div class="max-w-xl mx-auto bg-white p-4 rounded shadow">
+    <h1 id="title" class="text-xl font-bold mb-4"></h1>
+    <p><strong>Target:</strong> <span id="target"></span></p>
+    <p><strong>Clicks:</strong> <span id="clicks"></span></p>
+    <p><strong>Last Clicked:</strong> <span id="lastClicked"></span></p>
+  </div>
+
+<script>
+const code = window.location.pathname.split('/').pop();
+document.getElementById('title').textContent = 'Stats for ' + code;
+
+async function load() {
+  const res = await fetch('/api/links/' + code);
+  if (res.status === 404) {
+    document.body.innerHTML = '<h1>Not found</h1>';
+    return;
+  }
+  const data = await res.json();
+  document.getElementById('target').textContent = data.targetUrl;
+  document.getElementById('clicks').textContent = data.clicks;
+  document.getElementById('lastClicked').textContent = data.lastClickedAt || '-';
+}
+load();
+</script>
+</body>
+</html>
